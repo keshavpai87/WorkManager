@@ -9,12 +9,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Observer
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.impl.WorkManagerImpl
 
 class MainActivity : AppCompatActivity() {
+
+    /*companion object {
+        const val KEY_COUNT_VALUE = "key_count"
+    }*/
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -33,9 +41,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun setOneTimeWorkRequest() {
 //        val oneTimeWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>().build()
+
         val workManager =  WorkManager.getInstance(applicationContext)
-        val uploadRequest = OneTimeWorkRequest.Builder(UploadWorker::class.java)
+
+        /*val data : Data = Data.Builder()
+            .putInt(KEY_COUNT_VALUE, 125)
+            .build()*/
+
+        val constraints = Constraints.Builder()
+
+            // Only when the device is in charging state
+            .setRequiresCharging(true)
+
+            // Only when the device is connected to a network
+            .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
+
+        val uploadRequest = OneTimeWorkRequest.Builder(UploadWorker::class.java)
+            .setConstraints(constraints)
+//            .setInputData(data)
+            .build()
+
         workManager.enqueue(uploadRequest)
         workManager.getWorkInfoByIdLiveData(uploadRequest.id)
             .observe(this, Observer {
