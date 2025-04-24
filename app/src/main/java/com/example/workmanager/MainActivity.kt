@@ -62,13 +62,24 @@ class MainActivity : AppCompatActivity() {
             .setInputData(data)
             .build()
 
-        /*val filterRequest = OneTimeWorkRequest.Builder(FilteringWorker::class.java)
+        val filterRequest = OneTimeWorkRequest.Builder(FilteringWorker::class.java)
             .build()
 
         val compressRequest = OneTimeWorkRequest.Builder(CompressingWorker::class.java)
-            .build()*/
+            .build()
 
-        workManager.enqueue(uploadRequest)
+//        val downloadingRequest = OneTimeWorkRequest.Builder(DownloadingWorker::class.java)
+//            .build()
+
+//        workManager.enqueue(uploadRequest)
+
+//      Sequentially Chaining Workers
+        workManager
+            .beginWith(filterRequest)
+            .then(compressRequest)
+            .then(uploadRequest)
+            .enqueue()
+
         workManager.getWorkInfoByIdLiveData(uploadRequest.id)
             .observe(this, Observer {
                 findViewById<TextView>(R.id.textView).text = it?.state?.name
