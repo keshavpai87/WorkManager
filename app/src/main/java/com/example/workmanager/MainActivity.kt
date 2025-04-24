@@ -19,9 +19,9 @@ import androidx.work.impl.WorkManagerImpl
 
 class MainActivity : AppCompatActivity() {
 
-    /*companion object {
+    companion object {
         const val KEY_COUNT_VALUE = "key_count"
-    }*/
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +44,9 @@ class MainActivity : AppCompatActivity() {
 
         val workManager =  WorkManager.getInstance(applicationContext)
 
-        /*val data : Data = Data.Builder()
+        val data : Data = Data.Builder()
             .putInt(KEY_COUNT_VALUE, 125)
-            .build()*/
+            .build()
 
         val constraints = Constraints.Builder()
 
@@ -59,13 +59,26 @@ class MainActivity : AppCompatActivity() {
 
         val uploadRequest = OneTimeWorkRequest.Builder(UploadWorker::class.java)
             .setConstraints(constraints)
-//            .setInputData(data)
+            .setInputData(data)
             .build()
+
+        /*val filterRequest = OneTimeWorkRequest.Builder(FilteringWorker::class.java)
+            .build()
+
+        val compressRequest = OneTimeWorkRequest.Builder(CompressingWorker::class.java)
+            .build()*/
 
         workManager.enqueue(uploadRequest)
         workManager.getWorkInfoByIdLiveData(uploadRequest.id)
             .observe(this, Observer {
                 findViewById<TextView>(R.id.textView).text = it?.state?.name
+                if (it != null) {
+                    if (it.state.isFinished) {
+                        val data = it.outputData
+                        val message = data.getString(UploadWorker.KEY_WORKER)
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
             })
     }
 }
