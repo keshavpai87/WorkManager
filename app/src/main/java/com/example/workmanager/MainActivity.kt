@@ -1,5 +1,6 @@
 package com.example.workmanager
 
+
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -13,9 +14,9 @@ import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequest
-import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import androidx.work.impl.WorkManagerImpl
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,7 +36,8 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnStart).setOnClickListener {
             Toast.makeText(this, "Clicked", Toast.LENGTH_SHORT).show()
-            setOneTimeWorkRequest()
+//            setOneTimeWorkRequest()
+            setPeriodicWorkRequest()
         }
     }
 
@@ -68,14 +70,21 @@ class MainActivity : AppCompatActivity() {
         val compressRequest = OneTimeWorkRequest.Builder(CompressingWorker::class.java)
             .build()
 
-//        val downloadingRequest = OneTimeWorkRequest.Builder(DownloadingWorker::class.java)
-//            .build()
+        val downloadingRequest = OneTimeWorkRequest.Builder(DownloadingWorker::class.java)
+            .build()
+
+        // For parallel work, we can use mutable list
+        val parallelChainingWork = mutableListOf<OneTimeWorkRequest>()
+        parallelChainingWork.add(downloadingRequest)
+        parallelChainingWork.add(filterRequest)
 
 //        workManager.enqueue(uploadRequest)
 
 //      Sequentially Chaining Workers
         workManager
-            .beginWith(filterRequest)
+//            .beginWith(filterRequest)
+            // Parallel Chaining Worker
+            .beginWith(parallelChainingWork)
             .then(compressRequest)
             .then(uploadRequest)
             .enqueue()
@@ -91,5 +100,15 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             })
+    }
+
+    private fun setPeriodicWorkRequest() {
+        val periodicWorkRequest = PeriodicWorkRequest.Builder(
+            DownloadingWorker::class.java,
+            16,
+            TimeUnit.MINUTES)
+            .build()
+
+        WorkManager.getInstance(applicationContext).enqueue(periodicWorkRequest)
     }
 }
